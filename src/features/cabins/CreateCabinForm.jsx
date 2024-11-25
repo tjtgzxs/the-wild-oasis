@@ -50,7 +50,9 @@ function CreateCabinForm({cabinToEdit={}}) {
         const image=typeof (values.image)==="string"?values.image:values.image[0];
         if(isEditSession){
             editCabin({newCabinData:{...values,image},id:editId});
-        }else { createCabin({...values,image:image},editId)}
+        }else {
+            createCabin({...values,image},editId)
+        }
 
 
     }
@@ -100,7 +102,7 @@ function CreateCabinForm({cabinToEdit={}}) {
             required:"This field is required.",
             validate:(value)=>{
                 console.log(value,getValues().regularPrice)
-                return value<=(getValues().regularPrice)||"Discount must be less than the regular price"
+                return +value<=Number(getValues().regularPrice)||"Discount must be less than the regular price"
             }
 
 
