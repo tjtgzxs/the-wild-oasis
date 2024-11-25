@@ -1,16 +1,34 @@
-import supabase from "./supabase.js";
-export const createCabin = async (newCabin) => {
-
-    const { data, error } = await supabase
+import supabase, {supabaseUrl} from "./supabase.js";
+export const createEditCabin = async (newCabin,id) => {
+    const hasImagePath=newCabin.image?.startsWith?.(supabaseUrl)
+    const imageName=`${Math.random()}-${newCabin.image.name}`.replace("/","");
+    const imagePath=hasImagePath?newCabin.image:`${supabaseUrl}/storage/v1/object/public/cabin-images/${imageName}`
+    //1.create Cabin
+    let query= supabase
         .from('cabins')
-        .insert([
-            newCabin,
+    if (!id){
+        query=query .insert([
+            {...newCabin,image:imagePath},
         ])
-        .select()
+    }
+    if (id){
+        query=query.update({...newCabin,image:imagePath})
+            .eq('id', id)
+    }
+    const { data, error } = await query.select().single()
     if (error){
         console.log(error);
         throw new Error("Cabin not be inserted")
     }
+    //2.upload image
+    const { fileData, fileError } = await supabase.storage.from('cabin-images').upload(imageName, newCabin.image);
+    if (fileError) {
+        // Handle error
+        console.log(fileError);
+        await deleteCabin(data.id)
+        throw new Error("Cabin image not be uploaded")
+    }
+    return {...data,uploadData:fileData};
 }
 
 export const getCabins = async ()=>{
